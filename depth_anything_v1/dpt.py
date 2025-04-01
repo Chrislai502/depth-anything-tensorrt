@@ -161,8 +161,8 @@ class DPT_DINOv2(nn.Module):
         depth = F.interpolate(depth, size=(h, w), mode="bilinear", align_corners=True)
         depth = F.relu(depth)
 
-        #return depth.squeeze(1)
-        return depth
+        return depth.squeeze(1)
+        # return depth
 
 
 if __name__ == '__main__':

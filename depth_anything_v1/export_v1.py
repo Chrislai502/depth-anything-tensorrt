@@ -3,8 +3,8 @@ import torch
 import torch.onnx
 import argparse
 
-from depth_anything.dpt import DPT_DINOv2
-from depth_anything.util.transform import Resize, NormalizeImage, PrepareForNet
+from Depth_Anything.depth_anything.dpt import DPT_DINOv2
+from Depth_Anything.depth_anything.util.transform import Resize, NormalizeImage, PrepareForNet
 
 def export_model(encoder: str, load_from: str, image_shape: tuple):
     """
@@ -22,7 +22,7 @@ def export_model(encoder: str, load_from: str, image_shape: tuple):
     # Initializing model
     assert encoder in ['vits', 'vitb', 'vitl']
     if encoder == 'vits':
-        depth_anything = DPT_DINOv2(encoder='vits', features=64, out_channels=[48, 96, 192, 384], localhub='localhub')
+        depth_anything = DPT_DINOv2(encoder='vits', features=64, out_channels=[48, 96, 192, 384], localhub=False)
     elif encoder == 'vitb':
         depth_anything = DPT_DINOv2(encoder='vitb', features=128, out_channels=[96, 192, 384, 768], localhub='localhub')
     else:
@@ -32,7 +32,7 @@ def export_model(encoder: str, load_from: str, image_shape: tuple):
     print('Total parameters: {:.2f}M'.format(total_params / 1e6))
 
     # Loading model weight
-    depth_anything.load_state_dict(torch.load(load_from, map_location='cpu'), strict=True)
+    depth_anything.load_state_dict(torch.load(load_from, map_location='cpu')['model'], strict=True)
 
     depth_anything.eval()
 
@@ -45,7 +45,7 @@ def export_model(encoder: str, load_from: str, image_shape: tuple):
     onnx_path = load_from.split('/')[-1].split('.pth')[0] + '.onnx'
 
     # Export the PyTorch model to ONNX format
-    torch.onnx.export(depth_anything, dummy_input, onnx_path, opset_version=11, input_names=["input"], output_names=["output"], verbose=True)
+    torch.onnx.export(depth_anything, dummy_input, onnx_path, opset_version=19, input_names=["input"], output_names=["output"], verbose=True)
 
     print(f"Model exported to {onnx_path}")
 
@@ -53,7 +53,7 @@ def export_model(encoder: str, load_from: str, image_shape: tuple):
 def main():
     parser = argparse.ArgumentParser(description="Export Depth DPT model to ONNX format")
     parser.add_argument("--encoder", type=str, choices=['vits', 'vitb', 'vitl'], help="Type of encoder to use ('vits', 'vitb', 'vitl')")
-    parser.add_argument("--load_from", type=str, help="Path to the pre-trained model checkpoint")
+    parser.add_argument("--load_from", type=str, default="/home/chris/testing/depth_anything/depth-anything-tensorrt/depth_anything_v1/DepthAnythingv1_11-Dec_12-04-50740ac911a2_latest.pt", help="Path to the pre-trained model checkpoint")
     parser.add_argument("--image_shape", type=int, nargs=3, metavar=("channels", "height", "width"), help="Shape of the input image")
     args = parser.parse_args()
 
